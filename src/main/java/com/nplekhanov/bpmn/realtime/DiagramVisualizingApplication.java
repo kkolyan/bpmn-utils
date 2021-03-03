@@ -19,6 +19,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,22 +32,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class BrowseDiagram implements Application {
-    public static void main(String[] args) {
+public class DiagramVisualizingApplication implements Application {
 
-        String sourceFile = args[0];
-
-        BpmnModel model = new BpmnXMLConverter().convertToBpmnModel(() -> {
-            try {
-                return new FileInputStream(sourceFile);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }, true, false);
-
-        InteractiveCanvas.start(1000, new Dimension(1200, 800), new BrowseDiagram(model));
-    }
-
+    private final String title;
     private Map<String, Node> nodes;
     private List<Edge> edges;
     private Vector2D cameraOffset;
@@ -56,11 +44,20 @@ public class BrowseDiagram implements Application {
 
     private StringBuilder search = new StringBuilder();
 
-    public BrowseDiagram(final BpmnModel model) {
+    public DiagramVisualizingApplication(final File sourceFile) {
+        BpmnModel model = new BpmnXMLConverter().convertToBpmnModel(() -> {
+            try {
+                return new FileInputStream(sourceFile);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }, true, false);
+
         nodes = new TreeMap<>();
         edges = new ArrayList<>();
         cameraOffset = Vector2D.ZERO;
         cameraDragPivot = Vector2D.ZERO;
+        title = sourceFile.getPath();
         Random random = new Random(123);
         if (model.getProcesses().size() != 1) {
             throw new IllegalStateException();
@@ -112,6 +109,11 @@ public class BrowseDiagram implements Application {
             }
         }
 
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
     }
 
     @Override

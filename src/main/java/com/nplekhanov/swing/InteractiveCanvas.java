@@ -2,6 +2,7 @@ package com.nplekhanov.swing;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.TransferHandler;
 import javax.swing.WindowConstants;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -43,12 +44,32 @@ public class InteractiveCanvas {
 
                 canvasPanel.addKeyListener(keyboardTracker);
 
+                if (application instanceof DropAwareApplication) {
+
+                    canvasPanel.setTransferHandler(new TransferHandler("dsadsa") {
+                        @Override
+                        public boolean importData(final TransferSupport support) {
+                            return ((DropAwareApplication) application).importData(support);
+                        }
+
+                        @Override
+                        public boolean canImport(final TransferSupport support) {
+                            return ((DropAwareApplication) application).canImport(support);
+                        }
+                    });
+                }
+
                 frame.add(canvasPanel);
                 EventQueue.invokeLater(() -> {
                     frame.setVisible(true);
                     frame.setSize(windowSize.width, windowSize.height);
                 });
-                long frameNanos = (long) (1000_000_000.0 / framesPerSecond);
+                long frameNanos;
+                if (framesPerSecond > 0) {
+                    frameNanos = (long) (1000_000_000.0 / framesPerSecond);
+                } else {
+                    frameNanos = 0;
+                }
                 long lastFrameSync = System.nanoTime();
                 while (!stop.get()) {
                     try {
@@ -56,6 +77,10 @@ public class InteractiveCanvas {
                             if (frame.isVisible()) {
                                 if (!canvasPanel.hasFocus() && frame.isActive()) {
                                     canvasPanel.requestFocus();
+                                }
+                                String title = application.getTitle();
+                                if (!title.equals(frame.getTitle())) {
+                                    frame.setTitle(title);
                                 }
                                 frame.getContentPane().repaint();
                             } else {
